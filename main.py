@@ -3,10 +3,11 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from scryfall import Scryfall
 from card_recognition import CardRecognition
+import os
 
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this to a random secret key
+app.secret_key = os.environ.get("APP_SECRET_KEY")  # Change this to a random secret key
 
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'
@@ -138,4 +139,4 @@ def card_recognition():
     return render_template('pages/card-recognition.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

@@ -1,11 +1,12 @@
 import requests
 import base64
 import re
+import os
 
 class CardRecognition:
     OCR_API_URL = "https://api.ocr.space/parse/image"
     HEADERS = {
-        'apikey': 'K88311911388957' # <-- PASTE YOUR KEY HERE
+        'apikey': os.environ.get("OCR_API_KEY") # <-- PASTE YOUR KEY HERE
     }
 
     @staticmethod
