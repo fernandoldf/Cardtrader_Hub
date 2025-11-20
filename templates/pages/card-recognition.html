@@ -15,7 +15,7 @@
         {% endif %}
     {% endwith %}
     
-    <form class="form" action="{{ url_for('card_recognition') }}" method="post" enctype="multipart/form-data">
+    <form id="uploadForm" class="form" action="{{ url_for('card_recognition') }}" method="post" enctype="multipart/form-data">
         <div class="file-input-wrapper">
             <input type="file" name="card_image" id="fileInput" accept="image/png,image/jpeg,image/jpg,image/heic" required>
             <span class="file-input-label" id="fileLabel">Choose a file...</span>
@@ -30,6 +30,7 @@
     const fileInput = document.getElementById('fileInput');
     const fileLabel = document.getElementById('fileLabel');
     const submitBtn = document.getElementById('submitBtn');
+    const uploadForm = document.getElementById('uploadForm');
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
     fileInput.addEventListener('change', () => {
@@ -48,5 +49,45 @@
             submitBtn.disabled = true;
         }
     });
+
+    // Prevent double submissions: disable the submit button after click/submit
+    // and provide a way to re-enable if the request is handled via AJAX.
+    // Store original text so we can restore it if needed.
+    if (submitBtn) {
+        submitBtn.dataset.originalText = submitBtn.textContent;
+    }
+
+    function disableSubmitButton() {
+        if (!submitBtn) return;
+        // If already submitted, block further submissions
+        if (submitBtn.dataset.submitted === 'true') return false;
+        submitBtn.disabled = true;
+        submitBtn.dataset.submitted = 'true';
+        submitBtn.setAttribute('aria-disabled', 'true');
+        submitBtn.textContent = 'Processing...';
+        return true;
+    }
+
+    function reenableSubmitButton() {
+        if (!submitBtn) return;
+        submitBtn.disabled = false;
+        submitBtn.dataset.submitted = 'false';
+        submitBtn.setAttribute('aria-disabled', 'false');
+        submitBtn.textContent = submitBtn.dataset.originalText || 'Upload';
+    }
+
+    // Expose reenable function so other scripts (e.g., AJAX handlers) can call it
+    window.reenableSubmitButton = reenableSubmitButton;
+
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', (e) => {
+            // Disable button immediately to prevent double clicks while the
+            // browser performs the form submission or an AJAX request.
+            disableSubmitButton();
+            // If other code calls e.preventDefault() to perform AJAX,
+            // they should call `window.reenableSubmitButton()` when finished
+            // (on error or when re-enabling is desired).
+        });
+    }
 </script>
 {% endblock %}
