@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+#cards
+
+cards/
+
+# Virtual environments
+venv/
+env/
+.venv/
+venv.bak/
+
+# Environment files
+.env
+.env.*
+/.env
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Python packaging
+build/
+dist/
+pip-wheel-metadata/
+*.egg-info/
+
+# Logs and runtime files
+*.log
+instance/
+*.sqlite3
+
+# Uploads / generated assets
+uploads/
+*.cache
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+
+# macOS metadata
+*.DS_Store
