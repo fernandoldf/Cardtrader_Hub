@@ -1,13 +1,17 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from dotenv import load_dotenv
+
+load_dotenv()
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.utils import secure_filename
 from scryfall import Scryfall
 from card_recognition import CardRecognition
-from image_resize import process_image
+from image_utils import download_and_blur_image, process_image
+import uuid
 
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("APP_SECRET_KEY")  # Change this to a random secret key
+app.secret_key = os.environ.get("APP_SECRET_KEY") or "super-secret-dev-key" # Change this to a random secret key
 
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'
@@ -81,13 +85,100 @@ def card_search():
     
     return render_template('pages/card-search.html')
 
-@app.route('/price-tracking')
-def price_tracking():
-    return render_template('pages/price-tracking.html')
-
 @app.route('/interactive-game')
 def interactive_game():
-    return render_template('pages/interactive-game.html')
+    if 'game_state' not in session:
+        return render_template('pages/interactive-game.html', game_active=False)
+    
+    # Ensure word_length exists for backward compatibility or if missing
+    if 'word_length' not in session['game_state']:
+        session['game_state']['word_length'] = len(session['game_state']['card_name'])
+        session.modified = True
+
+    # Ensure image_url_original exists for backward compatibility
+    if 'image_url_original' not in session['game_state']:
+        # Derive original URL from blurred URL (replace 'blurred' with 'original')
+        session['game_state']['image_url_original'] = session['game_state']['image_url'].replace('blurred', 'original')
+        session.modified = True
+
+    return render_template('pages/interactive-game.html', 
+                         game_active=True,
+                         image_url=session['game_state']['image_url'],
+                         image_url_original=session['game_state']['image_url_original'],
+                         attempts=session['game_state']['attempts'],
+                         max_attempts=session['game_state']['max_attempts'],
+                         guesses=session['game_state']['guesses'],
+                         game_over=session['game_state']['game_over'],
+                         win=session['game_state']['win'],
+                         correct_card_name=session['game_state'].get('card_name') if session['game_state']['game_over'] else None,
+                         word_length=session['game_state'].get('word_length'),
+                         target_word=session['game_state'].get('card_name'))
+
+@app.route('/interactive-game/new', methods=['POST'])
+def new_game():
+    try:
+        # Get a random card
+        card_data = Scryfall.get_random_card()
+        if card_data == "Not found" or 'image_uris' not in card_data:
+            flash('Could not fetch a valid card for the game. Try again.', 'error')
+            return redirect(url_for('interactive_game'))
+            
+        image_url = card_data['image_uris']['large']
+        full_card_name = card_data['name']
+        
+        # Use only the part before the first comma
+        card_name = full_card_name.split(',')[0].strip()
+        
+        # Generate a unique filename for the blurred image
+        filename = f"{uuid.uuid4()}.jpg"
+        filepath = os.path.join('static', 'game_images', filename)
+        
+        # Download and blur
+        if download_and_blur_image(image_url, filename):
+            session['game_state'] = {
+                'card_name': card_name,
+                'word_length': len(card_name),
+                'image_url': url_for('static', filename=f'game_images/blurred/{filename}'),
+                'image_url_original': url_for('static', filename=f'game_images/original/{filename}'),
+                'attempts': 0,
+                'max_attempts': 5,
+                'guesses': [],
+                'game_over': False,
+                'win': False
+            }
+        else:
+            flash('Error processing game image.', 'error')
+            
+    except Exception as e:
+        print(f"Error starting game: {e}")
+        flash('An error occurred starting the game.', 'error')
+        
+    return redirect(url_for('interactive_game'))
+
+@app.route('/interactive-game/guess', methods=['POST'])
+def make_guess():
+    if 'game_state' not in session or session['game_state']['game_over']:
+        return redirect(url_for('interactive_game'))
+        
+    guess = request.form.get('guess', '').strip()
+    if not guess:
+        return redirect(url_for('interactive_game'))
+        
+    game_state = session['game_state']
+    game_state['guesses'].append(guess)
+    game_state['attempts'] += 1
+    
+    # Check win
+    if guess.lower() == game_state['card_name'].lower():
+        game_state['win'] = True
+        game_state['game_over'] = True
+        flash(f'Congratulations! You guessed correctly: {game_state["card_name"]}', 'success')
+    elif game_state['attempts'] >= game_state['max_attempts']:
+        game_state['game_over'] = True
+        flash(f'Game Over! The card was: {game_state["card_name"]}', 'error')
+    
+    session.modified = True
+    return redirect(url_for('interactive_game'))
 
 @app.route('/card-recognition', methods=['GET', 'POST'])
 def card_recognition():
@@ -142,4 +233,4 @@ def card_recognition():
     return render_template('pages/card-recognition.html')
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)

@@ -1,8 +1,65 @@
-from PIL import Image, Image
-from pillow_heif import register_heif_opener
+import requests
+from PIL import Image, ImageFilter
 import os
+from io import BytesIO
+from pillow_heif import register_heif_opener
+import uuid
 
 register_heif_opener()
+
+def download_image(image_url, filename, download_path = './static/game_images/original/'):
+    try:
+        response = requests.get(image_url)
+        response.raise_for_status()
+        
+        img = Image.open(BytesIO(response.content))
+        
+        # Convert to RGB if necessary (e.g. for PNGs with transparency)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        card_save = uuid.uuid4()
+        # Ensure directory exists
+        os.makedirs(download_path, exist_ok=True)
+
+        full_path = os.path.join(download_path, filename)
+        img.save(full_path, 'JPEG')
+    
+        return True
+    except Exception as e:
+        print(f"Error downloading image: {e}")
+        return False
+
+def blur_image(filename, blur_radius, image_path = './static/game_images/original/', output_path = './static/game_images/blurred/'):
+    try:
+        # Use os.path.join for safe path concatenation
+        input_full_path = os.path.join(image_path, filename)
+        img = Image.open(input_full_path)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+            
+        blurred_img = img.filter(ImageFilter.GaussianBlur(blur_radius))
+        
+        # Ensure output directory exists
+        os.makedirs(output_path, exist_ok=True)
+        
+        output_full_path = os.path.join(output_path, filename)
+        blurred_img.save(output_full_path, 'JPEG')
+        return True
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return False
+
+def download_and_blur_image(image_url, filename, blur_radius=8):
+    """
+    Downloads an image from a URL, applies a Gaussian blur, and saves it to the output path.
+    """
+    if download_image(image_url, filename=filename):
+        if blur_image(filename, blur_radius):
+            return True
+    
+    return False
+
 
 # --- 1. FUNÇÃO DE REDIMENSIONAMENTO (RESIZE) ---
 def resize_image(img: Image.Image, max_resolution: tuple [int, int]) -> Image.Image:
@@ -90,14 +147,17 @@ def process_image(input_path: str, output_path: str,
 # Altere 'input_image.png' para o caminho da sua imagem e garanta que ela exista para teste.
 
 if __name__ == "__main__":
-    input_file = './cards/IMG_2013.HEIC'  # Substitua pelo caminho da sua imagem de entrada
-    output_file = 'imagem_tratada_1mb.jpeg'
+    input_file = '.cards/IMG_2013.HEIC'  # Substitua pelo caminho da sua imagem de entrada
+    output_file = 'cards/blurred.jpeg'
     MAX_1MB = 1024 * 1024 # 1,048,576 bytes
 
     # 
-    process_image(
-        input_path=input_file,
-        output_path=output_file,
-        max_resolution=(1920, 1080), 
-        max_bytes=MAX_1MB
-    )
+    # process_image(
+    #     input_path=input_file,
+    #     output_path=output_file,
+    #     max_resolution=(1920, 1080), 
+    #     max_bytes=MAX_1MB
+    # )
+
+    blur_image("isshin.jpg", 8,image_path="./cards/")
+
