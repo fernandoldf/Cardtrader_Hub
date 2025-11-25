@@ -1,11 +1,12 @@
 import requests
 import base64
 import re
+import os
 
 class CardRecognition:
     OCR_API_URL = "https://api.ocr.space/parse/image"
     HEADERS = {
-        'apikey': f"{os.getenv('OCR_API_KEY')}" # <-- PASTE YOUR KEY HERE
+        'apikey': os.environ.get("OCR_API_KEY") # <-- PASTE YOUR KEY HERE
     }
 
     @staticmethod
@@ -56,11 +57,11 @@ class CardRecognition:
         if not ocr_text:
             return None
         
-        card = {"set": None, "number": None, "name": None}
+        card = {"set": "", "number": "", "name": ""}
 
         # 1. Try to find a 3-character set code (e.g., KHM, MH2)
         # This looks for a 3-character word composed of uppercase letters and numbers.
-        match_set_code = re.search(r'\b[A-Z][A-Z0-9]{2}\b', ocr_text)
+        match_set_code = re.search(r'\b(?!MEE\b)[A-Z][A-Z0-9]{2}\b', ocr_text)
         if match_set_code:
             card["set"] = match_set_code.group(0)
         
@@ -70,13 +71,15 @@ class CardRecognition:
             card["number"] = match_slash.group(0).split('/')[0]  # Return only the part before the slash
 
         # 3. Try to find the 'u/c/m/r XXXX' format
-        if card['number'] is None:
-            match_rarity_code = re.search(r'\b(?:u|c|m|r)\s+\d+\b', ocr_text, re.IGNORECASE)
+        if card['number'] == "":
+            match_rarity_code = re.search(r'\b[ucrm]\s+\d{3,4}\b', ocr_text, re.IGNORECASE)
+            print(f"Rarity code match: {match_rarity_code}")
             if match_rarity_code:
-                card["number"] = match_rarity_code.group(0).split()[-1]  # Return only the number part
+                card["number"] = str(int(match_rarity_code.group(0).split()[-1])) # Return only the number part
 
         # 4. Fallback to the first line (card name)
-        card["name"] = ocr_text.split('\n')[0].strip()
+        first_line = ocr_text.split('\n')[0].strip()
+        card["name"] = re.sub(r'[0-9]', '', first_line).strip()
         print(card)
         return card
 
@@ -99,6 +102,6 @@ class CardRecognition:
 
 if __name__ == '__main__':
     # Example usage
-    path_to_your_card_image = './cards/pongify.jpeg'  # Update with your image path
+    path_to_your_card_image = './cards/isshin.jpg'  # Update with your image path
     result = CardRecognition.identify_card_from_image(path_to_your_card_image)
     print(f"Identified card: {result}")
