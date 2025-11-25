@@ -3,68 +3,91 @@
 {% block title %}Card Recognition - Cardtrader Hub{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2>Card Recognition</h2>
-    <p class="text-secondary">Upload an image of a card (PNG, JPG, JPEG) up to 5MB.</p>
+<div class="container upload-console-container">
+    {# Título e Subtítulo Gameificados #}
+    <h2>INITIATE CARD SCAN</h2>
+    <p class="text-secondary">Load data target (Image: PNG, JPG, JPEG) up to 5MB for analysis.</p>
     
+    {# Bloco de Mensagens (Flash Messages) #}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
+            <div class="message-log-group">
+                {% for category, message in messages %}
+                    {# Usando classes de alerta gameificadas baseadas no tema CSS #}
+                    <div class="alert system-message-box alert-{{ category }}">
+                        <span class="alert-icon">
+                            {% if category == 'error' %} 🛑 
+                            {% elif category == 'warning' %} ⚠️ 
+                            {% else %} ℹ️ 
+                            {% endif %}
+                        </span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
     {% endwith %}
     
+    {# Formulário de Upload #}
     <form id="uploadForm" class="form" action="{{ url_for('card_recognition') }}" method="post" enctype="multipart/form-data">
         <div class="file-input-wrapper">
+            {# O input é mantido #}
             <input type="file" name="card_image" id="fileInput" accept="image/png,image/jpeg,image/jpg,image/heic" required>
-            <span class="file-input-label" id="fileLabel">Choose a file...</span>
+            {# O label é atualizado para o tema #}
+            <span class="file-input-label" id="fileLabel">⫸ SELECT DATA FILE ⫷</span>
         </div>
-        <button type="submit" class="btn btn-full" id="submitBtn" disabled>Upload</button>
+        {# Botão de Ação #}
+        <button type="submit" class="btn btn-full" id="submitBtn" disabled>START SCAN</button>
     </form>
 
-    <a href="{{ url_for('home') }}" class="home-link">Back to Home</a>
+    {# Link de Navegação #}
+    <a href="{{ url_for('home') }}" class="home-link">RETURN TO MAIN CONSOLE</a>
 </div>
 
+{# O JavaScript foi atualizado para usar a nova terminologia de "SCANNING DATA" #}
 <script>
     const fileInput = document.getElementById('fileInput');
     const fileLabel = document.getElementById('fileLabel');
     const submitBtn = document.getElementById('submitBtn');
     const uploadForm = document.getElementById('uploadForm');
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const DEFAULT_LABEL = '⫸ SELECT DATA FILE ⫷';
 
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) {
             const file = fileInput.files[0];
-            fileLabel.textContent = file.name;
+            fileLabel.textContent = `[FILE SELECTED]: ${file.name}`; // Feedback mais detalhado
+            fileLabel.style.borderColor = 'var(--accent-color)'; // Feedback visual
 
             if (file.size > MAX_FILE_SIZE) {
-                alert('Error: File is larger than 5MB. Please choose a smaller file.');
+                alert('[ERROR] FILE SIZE LIMIT EXCEEDED: File is larger than 5MB. Please choose a smaller file.');
+                fileLabel.textContent = '[ERROR] SIZE EXCEEDED'; // Alerta visual no label
+                fileLabel.style.borderColor = '#e53e3e';
                 submitBtn.disabled = true;
             } else {
                 submitBtn.disabled = false;
             }
         } else {
-            fileLabel.textContent = 'Choose a file...';
+            fileLabel.textContent = DEFAULT_LABEL;
+            fileLabel.style.borderColor = 'var(--border-color)';
             submitBtn.disabled = true;
         }
     });
 
-    // Prevent double submissions: disable the submit button after click/submit
-    // and provide a way to re-enable if the request is handled via AJAX.
-    // Store original text so we can restore it if needed.
     if (submitBtn) {
         submitBtn.dataset.originalText = submitBtn.textContent;
     }
 
     function disableSubmitButton() {
         if (!submitBtn) return;
-        // If already submitted, block further submissions
         if (submitBtn.dataset.submitted === 'true') return false;
+        
+        // **MUDANÇA DE ESTADO DE CARREGAMENTO**
+        submitBtn.textContent = 'SCANNING DATA...'; 
+        
         submitBtn.disabled = true;
         submitBtn.dataset.submitted = 'true';
         submitBtn.setAttribute('aria-disabled', 'true');
-        submitBtn.textContent = 'Processing...';
         return true;
     }
 
@@ -73,20 +96,14 @@
         submitBtn.disabled = false;
         submitBtn.dataset.submitted = 'false';
         submitBtn.setAttribute('aria-disabled', 'false');
-        submitBtn.textContent = submitBtn.dataset.originalText || 'Upload';
+        submitBtn.textContent = submitBtn.dataset.originalText || 'START SCAN';
     }
 
-    // Expose reenable function so other scripts (e.g., AJAX handlers) can call it
     window.reenableSubmitButton = reenableSubmitButton;
 
     if (uploadForm) {
         uploadForm.addEventListener('submit', (e) => {
-            // Disable button immediately to prevent double clicks while the
-            // browser performs the form submission or an AJAX request.
             disableSubmitButton();
-            // If other code calls e.preventDefault() to perform AJAX,
-            // they should call `window.reenableSubmitButton()` when finished
-            // (on error or when re-enabling is desired).
         });
     }
 </script>

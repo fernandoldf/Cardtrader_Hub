@@ -1,21 +1,61 @@
-{% extends "base.html" %}
-
 {% block title %}Card Detail - Cardtrader Hub{% endblock %}
 
 {% block content %}
-<div class="container card-container">
-    <h2>{{ card.name }}</h2>
+{# 
+    Adicionado: "rarity-panel-..." para permitir que a cor de fundo ou borda 
+    do painel mude dinamicamente com base na raridade (Mythic, Rare, etc.).
+    A classe principal card-container é mantida.
+#}
+<div class="container card-container rarity-panel-{{ card.rarity | lower }}">
+    
+    {# Nome da Carta (Header do Console) #}
+    <h2 class="card-name-header">{{ card.name }}</h2>
+    
+    {# Imagem da Carta - Classe mantida para receber o brilho neon #}
     <img src="{{ card.image_uris.normal }}" alt="{{ card.name }}" class="card-image">
-    <div class="card-details">
-        <p><strong>Mana Cost:</strong> {{ card.mana_cost or 'N/A' }}</p>
-        <p><strong>Type:</strong> {{ card.type_line }}</p>
-        <p><strong>Set:</strong> {{ card.set_name }}</p>
-        <p><strong>Rarity:</strong> {{ card.rarity | capitalize }}</p>
+    
+    {# Painel de Detalhes (Data Display) #}
+    <div class="card-details data-panel">
+        
+        {# Linhas de Estatística (stat-row) #}
+        <div class="detail-group">
+            <p class="stat-row">
+                <span class="stat-label"><strong>// MANA COST:</strong></span> 
+                <span class="stat-value mana-cost-value">{{ card.mana_cost or 'N/A' }}</span>
+            </p>
+            
+            <p class="stat-row">
+                <span class="stat-label"><strong>// TYPE LINE:</strong></span> 
+                <span class="stat-value type-line-value">{{ card.type_line }}</span>
+            </p>
+            
+            <p class="stat-row">
+                <span class="stat-label"><strong>// SET ID:</strong></span> 
+                <span class="stat-value set-name-value">{{ card.set_name }}</span>
+            </p>
+            
+            {# Rarity - Aplica a classe de raridade para cores dinâmicas #}
+            <p class="stat-row rarity-highlight rarity-{{ card.rarity | lower }}">
+                <span class="stat-label"><strong>// RARITY CLASSIFICATION:</strong></span> 
+                <span class="stat-value rarity-value">{{ card.rarity | capitalize }}</span>
+            </p>
+        </div>
+        
         {% if card.oracle_text %}
-        <p><strong>Text:</strong> {{ card.oracle_text }}</p>
+        {# Bloco de Texto Oracle - Caixa separada para a descrição #}
+        <div class="description-box">
+            <h3 class="description-header">⫸ ORACLE.LOG ⫷</h3>
+            <p class="description-text">{{ card.oracle_text }}</p>
+        </div>
         {% endif %}
     </div>
-    <a href="{{ card.scryfall_uri }}" target="_blank" class="action-link">View on Scryfall</a>
-    <a href="{{ url_for('home') }}" class="home-link">Back to Home</a>
+
+    {# Ações - Botão de Alto Impacto #}
+    <div class="action-bar-group">
+        <a href="{{ card.scryfall_uri }}" target="_blank" class="btn action-link">ACCESS FULL DATALOG</a>
+    </div>
+    
+    {# Link de Voltar - Texto mais gameficado #}
+    <a href="{{ url_for('home') }}" class="home-link">RETURN TO MAIN CONSOLE</a>
 </div>
 {% endblock %}
