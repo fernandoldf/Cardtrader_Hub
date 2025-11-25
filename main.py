@@ -1,12 +1,14 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from scryfall import Scryfall
 from card_recognition import CardRecognition
 
+load_dotenv
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this to a random secret key
+app.secret_key = os.getenv('APP_SECRET_KEY')  # Change this to a random secret key
 
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads'

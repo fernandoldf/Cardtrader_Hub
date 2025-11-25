@@ -5,7 +5,7 @@ import re
 class CardRecognition:
     OCR_API_URL = "https://api.ocr.space/parse/image"
     HEADERS = {
-        'apikey': 'K88311911388957' # <-- PASTE YOUR KEY HERE
+        'apikey': f"{os.getenv('OCR_API_KEY')}" # <-- PASTE YOUR KEY HERE
     }
 
     @staticmethod
