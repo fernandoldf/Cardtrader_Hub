@@ -155,7 +155,23 @@ def new_game():
 
         # Gera nome único para imagem
         filename = f"{uuid.uuid4()}.jpg"
+        filepath = os.path.join('static', 'game_images', filename)
 
+        # Download and blur
+        if download_and_blur_image(image_url, filename):
+            session['game_state'] = {
+                'card_name': card_name,
+                'word_length': len(card_name),
+                'image_url': url_for('static', filename=f'game_images/blurred/{filename}'),
+                'image_url_original': url_for('static', filename=f'game_images/original/{filename}'),
+                'attempts': 0,
+                'max_attempts': 5,
+                'guesses': [],
+                'game_over': False,
+                'win': False
+            }
+        else:
+            flash('Error processing game image.', 'error')
     except Exception as e:
         flash('An error occurred starting the game.', 'error')
         
