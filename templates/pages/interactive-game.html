@@ -9,10 +9,9 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     {% for category, message in messages %}
-    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show"
+    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show text-center"
         role="alert">
         {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endfor %}
     {% endif %}
@@ -97,17 +96,21 @@
             </div>
         </div>
         {% endif %}
-
+        {% if not game_over %}
+            <form action="{{ url_for('new_game') }}" method="POST" class="margin-top: 100px">
+                <button type="submit" class="btn btn-primary btn-lg">Try Another Card</button>
+            </form>
+        {% endif %}
         {% if game_over %}
         <div class="result-section mt-4">
             {% if win %}
-            <div class="alert alert-success">
+            <div class="alert alert-success text-center">
                 <h4>🎉 You Won!</h4>
                 <p>The card was <strong>{{ correct_card_name }}</strong></p>
                 <p></p>
             </div>
             {% else %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger text-center">
                 <h4>Game Over</h4>
                 <p>The card was <strong>{{ correct_card_name }}</strong></p>
                 <p></p>
@@ -120,14 +123,21 @@
         </div>
         {% endif %}
     </div>
+    {% endif %}
+        <a href="{{ url_for('home') }}" class="home-link">RETURN TO MAIN CONSOLE</a>
 
     <style>
         .word-grid {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
+                display: flex;
+                justify-content: center;
+                gap: 5px;
+                /* Keep the whole word on one single row */
+                flex-wrap: nowrap;
+                /* Allow horizontal scrolling when the word is too long for the viewport */
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                align-items: center;
+            }
 
         .guess-row {
             display: flex;
@@ -140,8 +150,9 @@
         }
 
         .letter-box {
-            width: 40px;
-            max-width: 40px;
+            /* Allow boxes to scale responsively so the entire word stays on one row. */
+            width: clamp(28px, 3.0vw, 40px);
+            max-width: 48px;
             /* Max size */
             height: auto;
             /* Allow height to adjust */
@@ -154,9 +165,9 @@
             font-weight: bold;
             text-transform: uppercase;
             border-radius: 4px;
-            flex-shrink: 1;
-            /* Allow shrinking */
-            min-width: 0;
+            /* Allow inputs to shrink when needed, but keep a reasonable minimum */
+            flex: 0 1 auto;
+            min-width: 20px;
             /* Allow shrinking below content size if needed */
             display: flex;
             align-items: center;
@@ -175,9 +186,9 @@
         }
 
         .space-separator {
-            width: 10px;
-            /* Reduced width */
-            flex-shrink: 1;
+            /* Keep a small fixed separation so spaces don't force wrapping */
+            width: 8px;
+            flex: 0 0 8px;
         }
 
         /* Wordle Colors */
@@ -279,5 +290,4 @@
     </script>
 </div>
 </div>
-{% endif %}
 {% endblock %}
