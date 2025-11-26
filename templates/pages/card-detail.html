@@ -1,23 +1,19 @@
-{% block title %}Card Detail - Cardtrader Hub{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Random Card - Cardtrader Hub{% endblock %}
 
 {% block content %}
-{# 
-    Adicionado: "rarity-panel-..." para permitir que a cor de fundo ou borda 
-    do painel mude dinamicamente com base na raridade (Mythic, Rare, etc.).
-    A classe principal card-container é mantida.
-#}
+{# Inclui a classe de raridade para aplicar o brilho dinâmico #}
 <div class="container card-container rarity-panel-{{ card.rarity | lower }}">
     
-    {# Nome da Carta (Header do Console) #}
-    <h2 class="card-name-header">{{ card.name }}</h2>
+    <h3>// CARD DETAIL //</h3>
     
-    {# Imagem da Carta - Classe mantida para receber o brilho neon #}
     <img src="{{ card.image_uris.normal }}" alt="{{ card.name }}" class="card-image">
     
-    {# Painel de Detalhes (Data Display) #}
     <div class="card-details data-panel">
+        <h3 class="card-name-header">{{ card.name }}</h3>
         
-        {# Linhas de Estatística (stat-row) #}
+        {# Detalhes do Card em Linhas de Estatística #}
         <div class="detail-group">
             <p class="stat-row">
                 <span class="stat-label"><strong>// MANA COST:</strong></span> 
@@ -34,7 +30,7 @@
                 <span class="stat-value set-name-value">{{ card.set_name }}</span>
             </p>
             
-            {# Rarity - Aplica a classe de raridade para cores dinâmicas #}
+            {# Aplica highlight de raridade #}
             <p class="stat-row rarity-highlight rarity-{{ card.rarity | lower }}">
                 <span class="stat-label"><strong>// RARITY CLASSIFICATION:</strong></span> 
                 <span class="stat-value rarity-value">{{ card.rarity | capitalize }}</span>
@@ -42,20 +38,18 @@
         </div>
         
         {% if card.oracle_text %}
-        {# Bloco de Texto Oracle - Caixa separada para a descrição #}
+        {# Bloco de Texto Oracle #}
         <div class="description-box">
-            <h3 class="description-header">⫸ ORACLE.LOG ⫷</h3>
+            <h5 class="description-header">⫸ ORACLE.LOG ⫷</h5>
             <p class="description-text">{{ card.oracle_text }}</p>
         </div>
         {% endif %}
     </div>
 
-    {# Ações - Botão de Alto Impacto #}
     <div class="action-bar-group">
         <a href="{{ card.scryfall_uri }}" target="_blank" class="btn action-link">ACCESS FULL DATALOG</a>
     </div>
     
-    {# Link de Voltar - Texto mais gameficado #}
     <a href="{{ url_for('home') }}" class="home-link">RETURN TO MAIN CONSOLE</a>
 </div>
 {% endblock %}
