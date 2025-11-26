@@ -59,9 +59,8 @@ def random_card():
     try:
         card_data = Scryfall.get_random_card()
         if card_data != "Not found":
-            return render_template('pages/random-card.html', card=card_data)
+            return render_template('pages/card-detail.html', card=card_data)
         else:
-            flash('Could not fetch a random card.', 'error')
             return redirect(url_for('home'))
     except Exception as e:
         flash(f'Error fetching random card: {str(e)}', 'error')
