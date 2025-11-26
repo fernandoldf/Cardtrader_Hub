@@ -482,6 +482,7 @@ nav a:hover {
 
 .alert-success, .alert-info {
     color: var(--primary-text);
+    
     border: 1px solid var(--accent-color);
     background-color: rgba(0, 255, 192, 0.1);
     box-shadow: 0 0 8px rgba(0, 255, 192, 0.5);
